@@ -13,8 +13,6 @@ from transformers import AutoTokenizer, AutoModelForCausalLM, HfArgumentParser
 from lm_eval import evaluator
 from lm_eval.utils import make_table
 from evalplus.evaluate import evaluate as evalplus_evaluator
-from vllm.entrypoints.openai.api_server import run_server
-from vllm.engine.arg_utils import AsyncEngineArgs
 import uvloop
 
 from reap.args import ReapArgs, ModelArgs, EvalArgs
@@ -174,6 +172,17 @@ def start_server(model_name, model_args, eval_args, seed, log_file, port):
 
 
 def run_evaluate(model_args, results_dir, eval_args, seed):
+    if not any(
+        [
+            eval_args.run_lm_eval,
+            eval_args.run_evalplus,
+            eval_args.run_livecodebench,
+            eval_args.run_wildbench,
+            eval_args.run_math,
+        ]
+    ):
+        logger.info("No evaluations requested, skipping eval (and vLLM server start).")
+        return
     model_name = model_args.model_name
     if isinstance(model_name, pathlib.Path):
         model_name = model_name.__str__()
